@@ -112,15 +112,25 @@ describe LetterOpenerWeb::LettersController do
       delete :clear
       expect(response).to redirect_to(letters_path)
     end
+
+    it 'works with a post and _method: delete pseudo delete method' do
+      post :clear, params: { _method: 'delete' }
+      expect(response).to redirect_to(letters_path)
+    end
   end
 
   describe 'DELETE destroy' do
     let(:id) { 'an-id' }
+    before { allow_any_instance_of(LetterOpenerWeb::Letter).to receive(:exists?).and_return(true) }
 
     it 'removes the selected letter' do
-      allow_any_instance_of(LetterOpenerWeb::Letter).to receive(:exists?).and_return(true)
       expect_any_instance_of(LetterOpenerWeb::Letter).to receive(:delete)
       delete :destroy, params: { id: id }
+    end
+
+    it 'works with a post and _method: delete pseudo delete method' do
+      expect_any_instance_of(LetterOpenerWeb::Letter).to receive(:delete)
+      post :destroy, params: { _method: 'delete', id: id }
     end
   end
 end
