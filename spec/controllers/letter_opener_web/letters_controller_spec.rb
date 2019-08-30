@@ -33,7 +33,7 @@ describe LetterOpenerWeb::LettersController do
       before(:each) do
         expect(LetterOpenerWeb::Letter).to receive(:find).with(id).and_return(letter)
         expect(letter).to receive(:exists?).and_return(true)
-        get :show, id: id, style: letter_style
+        get :show, params: { id: id, style: letter_style }
       end
 
       it 'renders an HTML 200 response' do
@@ -70,7 +70,7 @@ describe LetterOpenerWeb::LettersController do
 
     context 'with wrong parameters' do
       it 'should return 404 when invalid id given' do
-        get :show, id: id, style: 'rich'
+        get :show, params: { id: id, style: 'rich' }
         expect(response.status).to eq(404)
       end
     end
@@ -89,7 +89,7 @@ describe LetterOpenerWeb::LettersController do
 
     it 'sends the file as an inline attachment' do
       allow(controller).to receive(:send_file) { controller.head :ok }
-      get :attachment, id: id, file: file_name.gsub(/\.\w+/, ''), format: File.extname(file_name)[1..-1]
+      get :attachment, params: { id: id, file: file_name.gsub(/\.\w+/, ''), format: File.extname(file_name)[1..-1] }
 
       expect(response.status).to eq(200)
       expect(controller).to have_received(:send_file)
@@ -97,7 +97,7 @@ describe LetterOpenerWeb::LettersController do
     end
 
     it "throws a 404 if attachment file can't be found" do
-      get :attachment, id: id, file: 'unknown', format: 'woot'
+      get :attachment, params: { id: id, file: 'unknown', format: 'woot' }
       expect(response.status).to eq(404)
     end
   end
@@ -112,15 +112,25 @@ describe LetterOpenerWeb::LettersController do
       delete :clear
       expect(response).to redirect_to(letters_path)
     end
+
+    it 'works with a post and _method: delete pseudo delete method' do
+      post :clear, params: { _method: 'delete' }
+      expect(response).to redirect_to(letters_path)
+    end
   end
 
   describe 'DELETE destroy' do
     let(:id) { 'an-id' }
+    before { allow_any_instance_of(LetterOpenerWeb::Letter).to receive(:exists?).and_return(true) }
 
     it 'removes the selected letter' do
-      allow_any_instance_of(LetterOpenerWeb::Letter).to receive(:exists?).and_return(true)
       expect_any_instance_of(LetterOpenerWeb::Letter).to receive(:delete)
-      delete :destroy, id: id
+      delete :destroy, params: { id: id }
+    end
+
+    it 'works with a post and _method: delete pseudo delete method' do
+      expect_any_instance_of(LetterOpenerWeb::Letter).to receive(:delete)
+      post :destroy, params: { _method: 'delete', id: id }
     end
   end
 end
